@@ -61,5 +61,5 @@ def _get_or_create_authy_profile(user):
 
 # used to trigger profile creation by accidental reference.
 # Rather use the _create_authy_profile def above
-User.authy_profile = property(lambda u: _get_or_create_authy_profile(user=u)[0])
+#User.authy_profile = property(lambda u: _get_or_create_authy_profile(user=u)[0])
 
