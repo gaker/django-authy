@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from django.conf import settings
 from authy.api import AuthyApiClient
 
@@ -8,11 +10,14 @@ AUTHY_FORCE_VERIFICATION = getattr(settings, 'AUTHY_FORCE_VERIFICATION', True)
 
 assert AUTHY_KEY, 'You must define a settings.AUTHY_KEY'
 
-AUTHY_API_URL = 'http://sandbox-api.authy.com' if AUTHY_IS_SANDBOXED is True else 'https://api.authy.com'  # None as we then use the clients default which should be https://api.authy.com
+if AUTHY_IS_SANDBOXED:
+    AUTHY_API_URL = 'http://sandbox-api.authy.com'
+else:
+    AUTHY_API_URL = 'https://api.authy.com'
 
 from .signals import authy_event
 
-import logging
+
 logger = logging.getLogger('django.request')
 
 
@@ -30,10 +35,12 @@ class AuthyService(object):
     def __init__(self, user, *args, **kwargs):
         # Allow overrides
         self.user = user
-        self.authy_profile = kwargs.get('authy_profile', user.authy_profile) # hope its passed in otherwise get it, efficent
+        self.authy_profile = kwargs.get('authy_profile', user.authy_profile)
+            # hope its passed in otherwise get it, efficent
 
         self.key = kwargs.get('key', AUTHY_KEY)
-        self.force_verification = kwargs.get('force_verification', AUTHY_FORCE_VERIFICATION)
+        self.force_verification = kwargs.get(
+            'force_verification', AUTHY_FORCE_VERIFICATION)
         self.errors = {}  # reset errors
 
         self.client = AuthyApiClient(api_key=self.key, api_uri=AUTHY_API_URL)
@@ -53,9 +60,13 @@ class AuthyService(object):
         """
         if self.authy_profile.authy_id is None:
 
-            authy_user = self.client.users.create(self.user.email,
-                                                  int(self.authy_profile.cellphone.national_number), # phonenumberfield stores as long
-                                                  int(self.authy_profile.cellphone.country_code)) #email, cellphone, area_code
+            authy_user = self.client.users.create(
+                self.user.email,
+                int(self.authy_profile.cellphone.national_number),
+
+                # email, cellphone, area_code
+                int(self.authy_profile.cellphone.country_code)
+            )
 
             if authy_user.ok():
                 self.authy_profile.authy_id = authy_user.id
@@ -79,7 +90,8 @@ class AuthyService(object):
         if self.authy_profile.is_smartphone is True:
             sms = self.client.users.request_sms(self.authy_id)
         else:
-            sms = self.client.users.request_sms(self.authy_id, {"force": True})  # force as the user is on an older phone with no app installed
+            # force as the user is on an older phone with no app installed
+            sms = self.client.users.request_sms(self.authy_id, {"force": True})
 
         ok = sms.ok()
         return ok if ok is True else sms.errors()
@@ -92,14 +104,10 @@ class AuthyService(object):
         if type(token) not in [str, unicode]:
             raise Exception('Token to validate should be a string.')
 
-        verification = self.client.tokens.verify(self.authy_id, str(token), {"force": self.force_verification})
+        verification = self.client.tokens.verify(
+            self.authy_id, str(token), {"force": self.force_verification})
         verified = verification.ok()
         self.errors = verification.errors()
-
-        if not verified:
-            logger.error(u'User: %s could not be verified using the token: %s due to: %s' % (self.user, token, self.errors))
-        else:
-            logger.debug(u'User: %s has authenticated successfully with Authy using token: %s' % (self.user, token))
 
         return verified
 
