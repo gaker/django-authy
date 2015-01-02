@@ -8,3 +8,4 @@ urlpatterns = patterns('',
     url(r'^holding/$', HoldingPageView.as_view(), name='holding'),
     url(r'^profile/$', ProfileView.as_view(), name='profile'),
 )
+

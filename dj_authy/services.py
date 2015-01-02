@@ -102,3 +102,4 @@ class AuthyService(object):
             logger.debug(u'User: %s has authenticated successfully with Authy using token: %s' % (self.user, token))
 
         return verified
+

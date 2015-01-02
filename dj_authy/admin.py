@@ -5,3 +5,4 @@ from .models import AuthyProfile
 
 
 admin.site.register([AuthyProfile])
+

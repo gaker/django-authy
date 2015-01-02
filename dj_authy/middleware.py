@@ -8,8 +8,10 @@ from . import _url_to_appropriate_authy_page
 import logging
 logger = logging.getLogger('django.request')
 
-AUTHY_SESSION_KEY = getattr(settings, 'AUTHY_SESSION_KEY', 'is_authy_authenticated')
-AUTHY_IS_REQUIRED_KEY = getattr(settings, 'AUTHY_IS_REQUIRED_KEY', 'require_authy_authentication')
+AUTHY_SESSION_KEY = getattr(
+    settings, 'AUTHY_SESSION_KEY', 'is_authy_authenticated')
+AUTHY_IS_REQUIRED_KEY = getattr(
+    settings, 'AUTHY_IS_REQUIRED_KEY', 'require_authy_authentication')
 
 
 class AuthyAuthenticationRequiredMiddleware(object):
@@ -46,3 +48,4 @@ class AuthyAuthenticationRequiredMiddleware(object):
 
                             return redirect(url)
         return None
+
